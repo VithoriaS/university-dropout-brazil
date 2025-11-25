@@ -1,0 +1,429 @@
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+\usepackage{graphicx,url}
+\usepackage[utf8]{inputenc}
+\usepackage{makecell}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\sloppy
+
+\title{Evasão Acadêmica em Universidades Brasileiras: Desenvolvimento de Algoritmos para Identificação de Perfil de Risco}
+
+\author{Vitória de Lourdes Carvalho Santos\inst{1} \and Orientador: Wladmir Cardoso Brandao\inst{2}}
+
+\address{
+  Instituto de Ciências Exatas e Informática\\
+  Pontifícia Universidade Católica de Minas Gerais (PUC Minas)\\
+  Caixa Postal 1.686 -- 30.535-901 -- Belo Horizonte -- MG -- Brasil\\
+  \email{vitoria.lourdes@sga.pucminas.br}
+  \email{wladmir@pucminas.br}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+School dropout in higher education has a significant impact on students' professional development and on the efficiency of educational institutions. This study develops and compares three predictive models (Decision Tree, Neural Network, and XGBoost) to identify dropout risk profiles among university students at PUC Minas, based on a dataset of 94,052 records enriched with institutional course information. By applying data mining and machine learning techniques, the XGBoost model achieved 94.3\% accuracy and 98.0\% AUC-ROC, demonstrating superior performance in identifying at-risk students. The results support proactive retention strategies and validate the importance of academic integration factors predicted by Tinto's theoretical model.
+\end{abstract}
+
+\begin{resumo}
+A evasão acadêmica no ensino superior impacta diretamente a formação profissional dos estudantes e a eficiência das instituições de ensino. Este trabalho desenvolve e compara três modelos preditivos (Árvore de Decisão, Rede Neural e XGBoost) para identificar perfis de risco de evasão entre estudantes da PUC Minas, utilizando uma base de 94.052 registros enriquecida com informações institucionais de cursos. O modelo XGBoost alcançou desempenho superior com 94,3\% de acurácia e 98,0\% de AUC-ROC. A análise de importância das variáveis confirmou que a integração acadêmica (semestres cursados: 25,5\%) é o principal preditor, validando o modelo teórico de Tinto. Os resultados fornecem subsídios práticos para estratégias proativas de retenção estudantil.
+\end{resumo}
+
+\section{Introdução}
+
+A evasão acadêmica no ensino superior brasileiro representa um sério desafio, tanto para os estudantes quanto para as instituições. De acordo com o \textit{Mapa do Ensino Superior no Brasil -- Semesp} (2024), a taxa média de evasão no ensino superior é de \textbf{57,2\%}, sendo mais acentuada nas instituições privadas (cerca de \textbf{61\%}) e menos prevalente nas instituições públicas (em torno de \textbf{40\%})~\cite{semesp2024}. Além disso, o Censo da Educação Superior de 2023 indica que apenas \textbf{27,1\%} dos jovens entre 18 e 24 anos estão matriculados em cursos de graduação, valor ainda distante da meta de \textbf{33\%} estipulada pelo Plano Nacional de Educação~\cite{inep2023}.
+
+O abandono implica em perda de potencial humano, desperdício de recursos e agrava desigualdades sociais, uma vez que a não conclusão do ensino superior está associada a maiores dificuldades de inserção no mercado de trabalho~\cite{carvalho2021, guimaraes2023}. A evasão é um fenômeno \textbf{multifatorial}, envolvendo aspectos acadêmicos, psicossociais, demográficos e socioeconômicos~\cite{rodrigues2022, batista2021}.
+
+Neste contexto, o objetivo deste trabalho é desenvolver modelos \textbf{preditivos}, utilizando técnicas de \textbf{mineração de dados} e \textbf{aprendizado de máquina}, capazes de identificar perfis de risco de evasão entre estudantes universitários, subsidiando a adoção de estratégias proativas de retenção.
+
+\section{Revisão de Literatura}
+
+\subsection{Evasão acadêmica: conceitos e causas}
+
+A evasão no ensino superior é reconhecida como um fenômeno complexo. No Brasil, fatores como desempenho insatisfatório em disciplinas, condições socioeconômicas desfavoráveis, inadimplência e desmotivação pessoal são recorrentes. Elementos psicossociais, como a falta de integração com a comunidade acadêmica e insatisfação com o curso, também contribuem.
+
+Entre os principais referenciais teóricos, destaca-se o modelo de \textbf{integração acadêmica e social} proposto por Vincent Tinto~\cite{tinto1975,tinto1987}, que entende a evasão como resultado de uma trajetória progressiva de desengajamento institucional. A menor integração do estudante com os aspectos acadêmicos e sociais aumenta a probabilidade de abandono.
+
+\subsection{Técnicas de predição aplicadas à educação}
+
+O uso de técnicas de análise preditiva é uma alternativa promissora para antecipar comportamentos de risco, utilizando dados históricos e variáveis institucionais para o desenvolvimento de modelos computacionais com capacidade significativa de previsão~\cite{pereira2023, rodrigues2022, carvalho2021}.
+
+Algoritmos de aprendizado de máquina como a \textbf{Árvore de Decisão} são valorizados pela sua interpretabilidade~\cite{batista2021,carvalho2021}, enquanto métodos \textit{ensemble} como \textbf{XGBoost} demonstram superior capacidade preditiva~\cite{zhao2023,putra2025}. \textbf{Redes Neurais} também apresentam resultados promissores, especialmente em grandes volumes de dados~\cite{sun2023}. Estudos reforçam que a escolha do algoritmo deve considerar tanto a \textbf{acurácia} quanto a \textbf{interpretabilidade} dos resultados para apoiar gestores acadêmicos na tomada de decisão~\cite{liu2022, putra2025}.
+
+\subsection{Trabalhos correlatos e lacunas identificadas}
+
+Diversos estudos buscam prever a evasão com alta precisão, frequentemente atingindo ou superando \textbf{80\%} de acurácia com algoritmos \textit{ensemble}~\cite{zhao2023} e redes neurais profundas~\cite{sun2023}. No Brasil, a incorporação de variáveis acadêmicas (notas, frequência), demográficas e socioeconômicas (bolsas, inadimplência) é consistentemente relevante para a precisão dos modelos~\cite{guimaraes2023, pereira2023, carvalho2021}.
+
+Apesar destes avanços, uma lacuna importante reside na falta de integração efetiva entre os modelos preditivos baseados em dados e os modelos teóricos de evasão (como o de Tinto). Outra limitação é que a maioria dos estudos foca na construção do modelo, desconsiderando sua \textbf{aplicação prática} em sistemas de gestão acadêmica.
+
+\section{Metodologia}
+
+A metodologia adotada é dividida em três etapas principais: (i) preparação, enriquecimento e análise exploratória dos dados, (ii) construção dos modelos preditivos e (iii) avaliação de desempenho.
+
+\subsection{Preparação e Enriquecimento dos Dados}
+
+O estudo utiliza uma base de dados acadêmica, anonimizada, da \textbf{PUC Minas} (\textbf{2020-2023}). A base contém \textbf{94.052 registros} de estudantes distribuídos em \textbf{522 cursos}, com 36 variáveis originais e taxa geral de evasão de \textbf{33,2\%} (31.252 evadidos e 62.800 não evadidos).
+
+As variáveis originais abrangem quatro dimensões principais:
+
+\textbf{(i) Desempenho Acadêmico}: \texttt{media\_nota\_anterior} (média das notas obtidas), \texttt{media\_frequencia\_anterior} (média de frequência), \texttt{qtd\_reprovacoes\_curso} (total de reprovações), \texttt{qtd\_disc\_reprov\_nota\_curso} e \texttt{qtd\_disc\_reprov\_frequencia\_curso} (disciplinas reprovadas por nota e frequência);
+
+\textbf{(ii) Situação Acadêmica}: \texttt{qtd\_semestres\_cursados} (tempo de permanência), \texttt{perc\_cursado} (percentual do curso concluído), \texttt{dsc\_situacao\_aluno\_curso} (status atual do aluno);
+
+\textbf{(iii) Atributos Pessoais e Demográficos}: \texttt{idade\_aluno}, \texttt{sexo\_aluno}, \texttt{val\_distancia\_campus} (distância entre domicílio e campus), \texttt{dsc\_turno} (período de estudo), \texttt{dsc\_forma\_ingresso} (forma de acesso ao curso);
+
+\textbf{(iv) Fatores Socioeconômicos}: \texttt{ind\_possui\_bolsa} (indicador de bolsa de estudos), \texttt{ind\_possui\_financiamento} (financiamento estudantil), \texttt{ind\_inadimplente} (inadimplência financeira).
+
+O processo de preparação envolveu:
+\begin{itemize}
+    \item \textbf{Limpeza}: Imputação de valores ausentes (mediana/moda) e tratamento de \textit{outliers} (IQR).
+    \item \textbf{Codificação e Normalização}: \textit{One-Hot Encoding} para variáveis nominais e \textit{StandardScaler} para variáveis numéricas.
+    \item \textbf{Balanceamento}: Aplicação da técnica \textbf{SMOTE} (\textit{Synthetic Minority Over-sampling Technique}) para mitigar o desbalanceamento de classes.
+    \item \textbf{Análise Exploratória (EDA)}: Utilizada extensivamente para identificar padrões na base completa (Seção 5.6).
+\end{itemize}
+
+\subsubsection{Enriquecimento de Dados Institucionais}
+
+Um diferencial metodológico deste trabalho foi o \textbf{enriquecimento} da base de dados através da integração com informações institucionais de cursos. A base \texttt{accounts.csv}, contendo \textbf{26.100 registros de cursos} da plataforma Canvas LMS, foi relacionada à base principal através de códigos de curso extraídos por expressões regulares do campo \texttt{sis\_source\_id}.
+
+O processo de enriquecimento alcançou \textbf{96\% de cobertura} (90.309 de 94.052 estudantes), adicionando \textbf{7 novas variáveis} ao conjunto original:
+
+\textbf{(i) Modalidade do Curso} (\texttt{modalidade\_curso\_encoded}): Classificação extraída do nome do curso em EAD, Online, Presencial ou Híbrido, permitindo identificar diferenças de risco entre modalidades de ensino;
+
+\textbf{(ii) Campus/Unidade} (\texttt{campus\_encoded}): Identificação da unidade de ensino (PPL, PSG, PMG, PBE, etc.), capturando variações regionais e de infraestrutura;
+
+\textbf{(iii) Maturidade do Curso} (\texttt{dias\_desde\_criacao}): Tempo em dias desde a criação do curso, refletindo a consolidação institucional e currículo;
+
+\textbf{(iv) Estado do Curso} (\texttt{curso\_ativo}): Indicador binário se o curso está ativo ou foi descontinuado (\texttt{workflow\_state}), relevante para identificar cursos em processo de encerramento.
+
+Este enriquecimento ampliou o conjunto de \textbf{36 variáveis originais} para \textbf{43 features finais} (após codificação e derivação de variáveis), permitindo ao modelo capturar não apenas características individuais dos estudantes, mas também \textbf{fatores contextuais institucionais} que impactam o risco de evasão.
+
+\subsection{Construção dos Modelos Preditivos}
+
+Três modelos de classificação foram implementados para prever a evasão (\texttt{ind\_evadido}):
+\begin{itemize}
+    \item \textbf{Árvore de Decisão}: Alta interpretabilidade, útil para compreender os critérios de classificação~\cite{batista2021,carvalho2021}.
+    \item \textbf{XGBoost (Extreme Gradient Boosting)}: Algoritmo \textit{ensemble} otimizado, conhecido por sua \textbf{alta performance} preditiva~\cite{zhao2023,putra2025}.
+    \item \textbf{Rede Neural (MLP)}: Multi-Layer Perceptron (3 camadas ocultas), capaz de modelar relações não-lineares complexas~\cite{sun2023}.
+\end{itemize}
+A implementação utilizou uma amostra estratificada de \textbf{15.000 registros} com hiperparâmetros ajustados para balanceamento de classes.
+
+\subsection{Avaliação de Desempenho}
+
+O modelo foi validado com a técnica de divisão \textbf{treino-teste} (\textbf{80\%} para treinamento, \textbf{20\%} para teste) com estratificação. As métricas utilizadas foram Acurácia, Precisão, Recall, F1-Score e \textbf{AUC-ROC} (Area Under the ROC Curve), sendo esta última crucial para avaliar a capacidade discriminatória em um contexto de classes desbalanceadas.
+
+\section{Resultados dos Modelos Preditivos}
+
+Os três modelos foram treinados e testados em uma amostra de 15.000 registros enriquecidos. A Tabela~\ref{tab:comparacao_modelos} apresenta a comparação das métricas de desempenho no conjunto de teste (3.000 registros).
+
+\begin{table}[h]
+\centering
+\caption{Comparação de desempenho dos três modelos preditivos}
+\label{tab:comparacao_modelos}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Recall} & \textbf{F1-Score} & \textbf{AUC-ROC} \\
+\midrule
+Árvore de Decisão & \textbf{88,1\%} & \textbf{79\%} & \textbf{88\%} & \textbf{83\%} & \textbf{94,8\%} \\
+Rede Neural (MLP) & \textbf{92,2\%} & \textbf{89\%} & \textbf{88\%} & \textbf{88\%} & \textbf{96,9\%} \\
+\textbf{XGBoost} & \textbf{94,3\%} & \textbf{91\%} & \textbf{92\%} & \textbf{92\%} & \textbf{98,0\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Desempenho Detalhado da Árvore de Decisão}
+
+A \textbf{Árvore de Decisão} foi implementada como modelo \textit{baseline} devido à sua alta \textbf{interpretabilidade} e capacidade de gerar regras de decisão explícitas. O modelo alcançou \textbf{88,1\%} de acurácia e \textbf{94,8\%} de AUC-ROC, demonstrando desempenho satisfatório para identificação de estudantes em risco.
+
+\textbf{Hiperparâmetros Utilizados:}
+\begin{itemize}
+    \item \texttt{max\_depth=10}: Profundidade máxima da árvore, controlando complexidade
+    \item \texttt{min\_samples\_split=100}: Mínimo de amostras para divisão de nó
+    \item \texttt{class\_weight='balanced'}: Balanceamento automático de classes
+    \item \texttt{criterion='gini'}: Medida de impureza para divisão dos nós
+\end{itemize}
+
+\textbf{Análise de Performance:}
+O modelo apresentou \textbf{Recall de 88\%}, indicando que identifica corretamente a maioria dos casos de evasão. A \textbf{Precisão de 79\%} revela que aproximadamente 21\% dos alertas são falsos positivos, aceitável para um sistema de alerta precoce onde é preferível investigar alguns casos desnecessários a perder estudantes em risco real.
+
+A análise da importância das variáveis revelou forte dominância do \textbf{Percentual Cursado} (57,4\%) e \textbf{Semestres Cursados} (12,3\%), confirmando que o progresso acadêmico é o principal critério de decisão. Esta simplicidade torna o modelo facilmente explicável para gestores acadêmicos, sendo útil para comunicação institucional das políticas de retenção.
+
+\textbf{Vantagens}: Regras de decisão transparentes, rápido treinamento e inferência, baixo custo computacional.
+
+\textbf{Limitações}: Tendência ao \textit{overfitting} com dados complexos, menor capacidade de capturar interações não-lineares entre múltiplas variáveis, desempenho inferior aos modelos mais sofisticados.
+
+\subsection{Desempenho Detalhado da Rede Neural (MLP)}
+
+A \textbf{Rede Neural Multi-Layer Perceptron (MLP)} foi implementada para capturar \textbf{relações não-lineares complexas} entre as features, alcançando \textbf{92,2\%} de acurácia e \textbf{96,9\%} de AUC-ROC, posicionando-se como intermediária entre a Árvore de Decisão e o XGBoost.
+
+\textbf{Arquitetura da Rede:}
+\begin{itemize}
+    \item \textbf{Camadas Ocultas}: [100, 50, 25 neurônios]
+    \item \textbf{Função de Ativação}: ReLU (Rectified Linear Unit)
+    \item \textbf{Otimizador}: Adam (learning\_rate=0.001)
+    \item \textbf{Regularização}: L2 (alpha=0.0001) para prevenir overfitting
+    \item \textbf{Batch Size}: 32 amostras
+    \item \textbf{Early Stopping}: Paciência de 10 épocas sem melhoria
+\end{itemize}
+
+\textbf{Processo de Treinamento:}
+O modelo convergiu em \textbf{40 épocas} com perda final (\textit{loss}) de \textbf{0,0852}, demonstrando boa capacidade de generalização. A curva de aprendizado revelou estabilização após 30 épocas, sem sinais de \textit{overfitting} severo. O uso de \texttt{StandardScaler} para normalização das features foi crucial para acelerar a convergência e melhorar o desempenho.
+
+\textbf{Análise de Performance:}
+Com \textbf{Precisão de 89\%} e \textbf{Recall de 88\%}, a rede neural apresentou desempenho equilibrado, reduzindo significativamente os falsos positivos comparado à Árvore de Decisão (21\% → 11\%). O F1-Score de \textbf{88\%} confirma o equilíbrio entre precisão e recall, tornando-a adequada para cenários onde o custo de falsos alarmes é relevante.
+
+A capacidade de modelar interações não-lineares permitiu à rede capturar padrões mais sutis, como a interação entre \textbf{desempenho acadêmico} e \textbf{fatores socioeconômicos}, que a Árvore de Decisão não consegue representar adequadamente.
+
+\textbf{Vantagens}: Alta capacidade de modelagem não-linear, desempenho robusto, boa generalização com regularização adequada.
+
+\textbf{Limitações}: Menor interpretabilidade (\textit{black box}), maior custo computacional no treinamento, requer normalização de dados e ajuste cuidadoso de hiperparâmetros.
+
+\subsection{Desempenho Detalhado do Modelo XGBoost}
+
+O modelo \textbf{XGBoost} demonstrou superioridade preditiva, alcançando \textbf{94,3\%} de acurácia e \textbf{98,0\%} de AUC-ROC, indicando uma excelente capacidade de distinção entre alunos evadidos e não evadidos. Este resultado representa um ganho de \textbf{6,2 pontos percentuais} sobre a Árvore de Decisão e \textbf{2,1 pontos percentuais} sobre a Rede Neural.
+
+\textbf{Hiperparâmetros Utilizados:}
+\begin{itemize}
+    \item \texttt{n\_estimators=300}: Número de árvores no ensemble
+    \item \texttt{max\_depth=8}: Profundidade máxima de cada árvore
+    \item \texttt{learning\_rate=0.05}: Taxa de aprendizado para regularização
+    \item \texttt{subsample=0.8}: Fração de amostras para cada árvore
+    \item \texttt{colsample\_bytree=0.8}: Fração de features para cada árvore
+    \item \texttt{min\_child\_weight=3}: Peso mínimo necessário para partição
+    \item \texttt{scale\_pos\_weight}: Ajuste automático para balanceamento de classes
+\end{itemize}
+
+\textbf{Processo de Treinamento:}
+O algoritmo constrói árvores de forma sequencial, onde cada nova árvore corrige os erros das anteriores através de \textit{gradient boosting}. A regularização L1 e L2 previne \textit{overfitting}, enquanto o \textit{early stopping} monitora a performance no conjunto de validação. O treinamento convergiu em aproximadamente 180 iterações (de 300 máximas), indicando boa capacidade de generalização.
+
+A \textbf{Matriz de Confusão} (Figura~\ref{fig:matriz_confusao}) revela que, dos casos reais de evasão (\textbf{Recall}), \textbf{92\%} foram corretamente identificados. A precisão de \textbf{91\%} na classe "Evadido" garante que a maioria dos estudantes classificados como de alto risco são, de fato, candidatos à evasão.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Matriz_Confusao_XGBoost_Enriquecido.png}
+    \caption{Matriz de Confusão do Modelo XGBoost com Dados Enriquecidos. A matriz ilustra a performance em termos de Verdadeiros Positivos, Falsos Positivos, etc.}
+    \label{fig:matriz_confusao}
+\end{figure}
+
+A \textbf{Curva ROC} (Figura~\ref{fig:curva_roc}) confirma a alta capacidade discriminatória, com a área sob a curva (\textbf{AUC}) próxima de \textbf{1,0}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Curva_ROC_XGBoost_Enriquecido.png}
+    \caption{Curva ROC do Modelo XGBoost. O valor de \textbf{98,0\%} da AUC-ROC demonstra a alta capacidade de distinção do modelo.}
+    \label{fig:curva_roc}
+\end{figure}
+
+\subsection{Análise de Importância das Features}
+
+A análise da importância das variáveis no modelo XGBoost (Figura~\ref{fig:importancia_features}) é crucial para o entendimento dos fatores de risco.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Importancia_Features_XGBoost_Enriquecido.png}
+    \caption{Importância das Variáveis no Modelo XGBoost com Dados Enriquecidos. O gráfico hierarquiza os preditores mais influentes no risco de evasão.}
+    \label{fig:importancia_features}
+\end{figure}
+
+As dez variáveis mais importantes são:
+\begin{itemize}
+    \item \textbf{Quantidade de Semestres Cursados}: \textbf{25,5\%}
+    \item \textbf{Média de Notas Anteriores}: \textbf{8,7\%}
+    \item \textbf{Performance Combinada (Notas e Frequência)}: \textbf{6,4\%}
+    \item \textbf{Percentual Cursado}: \textbf{5,3\%}
+    \item \textbf{Média de Frequência Anterior}: \textbf{4,7\%}
+    \item \textbf{Posse de Bolsa}: \textbf{4,7\%}
+    \item \textbf{Dias desde Criação do Curso} (Feature Enriquecida): \textbf{4,7\%}
+    \item \textbf{Modalidade do Curso} (Feature Enriquecida): \textbf{4,2\%}
+    \item \textbf{Idade do Aluno}: \textbf{4,0\%}
+    \item \textbf{Taxa de Reprovação}: \textbf{3,8\%}
+\end{itemize}
+O resultado reforça o modelo de Tinto, onde a \textbf{integração acadêmica} (\textit{Semestres Cursados}, \textit{Notas}, \textit{Reprovações}) é o preditor mais forte. A relevância das \textit{features enriquecidas} demonstra a importância de fatores institucionais (\textbf{Modalidade} e \textbf{Maturidade do Curso}) no risco de abandono.
+
+\subsection{Análise Comparativa dos Três Modelos}
+
+A comparação sistemática dos três algoritmos revela \textit{trade-offs} importantes entre performance, interpretabilidade e complexidade:
+
+\textbf{Performance Preditiva:} O \textbf{XGBoost} apresentou superioridade clara (94,3\% acurácia, 98,0\% AUC-ROC), seguido pela \textbf{Rede Neural} (92,2\%, 96,9\%) e \textbf{Árvore de Decisão} (88,1\%, 94,8\%). O ganho de \textbf{6,2 pontos percentuais} do XGBoost sobre a Árvore representa redução significativa de falsos negativos, crítica para não perder estudantes em risco real.
+
+\textbf{Interpretabilidade:} A \textbf{Árvore de Decisão} oferece regras explícitas ("SE percentual\_cursado < 30\% E semestres > 4 ENTÃO risco alto"), facilitando comunicação institucional. O \textbf{XGBoost} fornece importância de features quantitativa, permitindo compreensão dos fatores principais, embora sem regras diretas. A \textbf{Rede Neural} é essencialmente uma \textit{black box}, dificultando justificativas individuais.
+
+\textbf{Falsos Positivos vs. Falsos Negativos:} Para evasão acadêmica, \textbf{Recall} (identificar evadidos) é mais crítico que Precisão. O XGBoost alcançou \textbf{92\% de Recall}, perdendo apenas 8\% dos casos reais, contra 12\% da Árvore. O custo de falsos positivos (9\% no XGBoost vs. 21\% na Árvore) é compensado pela redução de perdas reais de estudantes.
+
+\textbf{Complexidade Computacional:} A Árvore tem treinamento instantâneo (<1 min), a Rede Neural requer ~5 minutos com GPU, e o XGBoost ~3 minutos. Para produção, todos são viáveis, com inferência em tempo real.
+
+\textbf{Recomendação:} Para \textbf{sistemas de produção}, o \textbf{XGBoost} é preferível pelo equilíbrio entre performance superior e interpretabilidade razoável. Para \textbf{comunicação institucional}, a Árvore de Decisão pode complementar como ferramenta explicativa, enquanto o XGBoost opera o sistema real.
+
+\subsubsection{Validação Teórica: Modelo de Tinto}
+
+Os resultados empíricos apresentam forte alinhamento com o modelo teórico de integração de Tinto~\cite{tinto1975,tinto1987}. A predominância da variável \textbf{Semestres Cursados} (25,5\%) como principal preditor corrobora a tese de que o tempo de permanência institucional reflete o grau de \textbf{integração acadêmica e social}. Estudantes que permanecem por mais semestres desenvolvem vínculos mais fortes com a instituição, reduzindo a probabilidade de abandono.
+
+As variáveis de \textbf{desempenho acadêmico} (notas, frequência, reprovações), que somadas representam mais de \textbf{40\%} da importância total, validam o conceito de integração acadêmica como fator protetor. A relevância de \textbf{fatores socioeconômicos} (bolsa: 4,7\%) demonstra que, embora menos influentes que o desempenho, as condições externas impactam significativamente o risco de evasão, alinhando-se com a literatura nacional~\cite{guimaraes2023}.
+
+\subsection{Análise Exploratória de Fatores de Evasão (EDA)}
+
+A análise exploratória da base completa (\textbf{94.052 registros}) destacou fatores críticos para intervenções proativas:
+\begin{itemize}
+    \item \textbf{Evasão por Turno:} A modalidade \textbf{Virtual} apresentou uma taxa de \textbf{50,9\%} de evasão, significativamente superior ao turno Tarde (\textbf{34,4\%}).
+    \item \textbf{Socioeconômicos:} Alunos \textbf{Inadimplentes} tiveram \textbf{46,1\%} de evasão, contra \textbf{26,9\%} para aqueles \textbf{Com bolsa}, ressaltando a vulnerabilidade financeira como um fator crítico.
+    \item \textbf{Temporal:} O ano de \textbf{2022} registrou o pico de evasão (\textbf{57,0\%}), correlacionado aos efeitos pós-pandêmicos, com forte recuperação em \textbf{2023} (\textbf{18,1\%}).
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\caption{Principais fatores de risco para evasão acadêmica identificados}
+\label{tab:fatores_risco}
+\begin{tabular}{|l|c|l|}
+\toprule
+\textbf{Fator} & \textbf{Taxa de Evasão} & \textbf{Observações} \\
+\midrule
+Modalidade Virtual & \textbf{50,9\%} & Maior risco identificado \\
+Inadimplência & \textbf{46,1\%} & Fator socioeconômico crítico \\
+Sexo Masculino & \textbf{37,6\%} & vs. \textbf{29,2\%} feminino \\
+Pico (2022) & \textbf{57,0\%} & Correlacionado ao período pandêmico \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Limitações do Estudo}
+
+Apesar dos resultados promissores, algumas limitações devem ser consideradas:
+
+\begin{itemize}
+    \item \textbf{Representatividade Temporal}: Os dados abrangem o período 2020-2023, incluindo o contexto pandêmico (pico de 57\% de evasão em 2022), o que pode não refletir cenários normais de operação institucional.
+    \item \textbf{Variáveis Ausentes}: Fatores psicossociais importantes (motivação, integração social, saúde mental) não estão disponíveis na base de dados, limitando a captura completa do fenômeno multicausal da evasão.
+    \item \textbf{Generalização}: O modelo foi treinado exclusivamente com dados da PUC Minas, sendo necessária validação externa para garantir sua aplicabilidade em outras instituições.
+    \item \textbf{Interpretabilidade do XGBoost}: Embora superior em performance, o modelo XGBoost é menos interpretável que a Árvore de Decisão, dificultando a comunicação dos critérios de decisão para gestores não técnicos.
+\end{itemize}
+
+\subsection{Implicações Práticas para Gestão Acadêmica}
+
+Os resultados possibilitam intervenções direcionadas:
+
+\begin{itemize}
+    \item \textbf{Sistema de Alerta Precoce}: Implementação de um painel de monitoramento que identifique estudantes de alto risco a partir do terceiro semestre, período crítico identificado na análise.
+    \item \textbf{Programas de Tutoria}: Direcionamento de recursos para alunos com baixo desempenho acadêmico (notas < 6,0 e frequência < 75\%), especialmente em cursos virtuais.
+    \item \textbf{Apoio Financeiro}: Priorização de programas de bolsas e negociação de dívidas para alunos inadimplentes, dado o risco 46,1\% vs. 26,9\% com bolsa.
+    \item \textbf{Revisão Curricular}: Avaliação da estrutura de cursos virtuais, que apresentam taxa de evasão 50,9\% (quase o dobro da média geral de 33,2\%).
+\end{itemize}
+
+\section{Considerações Finais}
+
+Este trabalho demonstrou a eficácia e viabilidade da aplicação de \textit{machine learning} para a predição de evasão acadêmica na PUC Minas. A análise de \textbf{94.052 registros}, combinada com o enriquecimento de dados, resultou em um modelo de alta performance.
+
+\textbf{Principais Conclusões:}
+\begin{itemize}
+    \item \textbf{Performance Máxima}: O modelo \textbf{XGBoost} atingiu \textbf{94,3\%} de acurácia e \textbf{98,0\%} de AUC-ROC, estabelecendo um padrão robusto para a identificação de estudantes em risco.
+    \item \textbf{Relevância das Features}: A análise de importância confirmou que a \textbf{integração acadêmica} (tempo cursado, notas) é o preditor dominante (\textbf{25,5\%} para Semestres Cursados), seguida por \textbf{condições socioeconômicas} e \textbf{características institucionais} (\textbf{modalidade}, \textbf{maturidade do curso}).
+    \item \textbf{Validação Teórica}: Os resultados empíricos confirmam o modelo de Tinto, demonstrando que a integração acadêmica é o fator protetor mais relevante contra a evasão.
+    \item \textbf{Insights para Intervenção}: O EDA identificou a \textbf{Modalidade Virtual} e a \textbf{Inadimplência} como as áreas de maior risco, permitindo que a instituição direcione recursos de retenção de forma mais precisa.
+    \item \textbf{Enriquecimento de Dados}: A integração com dados institucionais (\textbf{96\% de cobertura}) adicionou features relevantes (modalidade: 4,2\%, dias\_desde\_criacao: 4,7\%), ampliando a capacidade preditiva do modelo.
+\end{itemize}
+
+Os resultados validam a metodologia proposta e fornecem uma ferramenta preditiva de alto valor para a gestão acadêmica.
+
+\textbf{Disponibilização do Código:}
+Todos os códigos-fonte, scripts de análise e documentação estão disponíveis publicamente no repositório GitHub deste projeto~\cite{vithorias2025}, facilitando a reprodutibilidade dos resultados e permitindo adaptações para outras instituições de ensino superior.
+
+\subsection{Trabalhos Futuros}
+
+Para aprimorar e expandir este estudo, recomendam-se as seguintes direções:
+
+\begin{itemize}
+    \item \textbf{Incorporação de Variáveis Psicossociais}: Integração de dados qualitativos sobre motivação, expectativas e integração social dos estudantes.
+    \item \textbf{Análise Temporal Longitudinal}: Desenvolvimento de modelos sequenciais (LSTM, GRU) que capturem a trajetória temporal dos estudantes ao longo dos semestres.
+    \item \textbf{Validação Externa}: Testar o modelo em outras instituições de ensino superior para avaliar sua generalização.
+    \item \textbf{Sistema de Recomendação}: Desenvolver um sistema que não apenas identifique estudantes em risco, mas também recomende intervenções personalizadas baseadas no perfil individual.
+    \item \textbf{Análise de Custo-Benefício}: Avaliar o impacto financeiro e acadêmico das intervenções baseadas no modelo preditivo.
+\end{itemize}
+
+\begin{thebibliography}{99}
+
+\bibitem{tinto1975}
+TINTO, V.
+Leaving College: Rethinking the Causes and Cures of Student Attrition. 2. ed. Chicago: University of Chicago Press, 1993.
+
+\bibitem{tinto1987}
+TINTO, V.
+Stages of student departure: reflections on the longitudinal character of student leaving.
+\textit{The Journal of Higher Education}, v. 58, n. 6, p. 627–639, 1987.
+
+\bibitem{pereira2023}
+PEREIRA, R. T.; VIEIRA, R. A.
+Mineração de dados educacionais para previsão de evasão em cursos superiores.
+\textit{Revista de Tecnologias Educacionais em Observação (RTEO)}, v. 9, n. 2, 2023.
+Disponível em: \url{https://periodicos.ufpb.br/index.php/rteo/article/view/61881}. Acesso em: 18 jun. 2025.
+
+\bibitem{batista2021}
+BATISTA, G. D.; OLIVEIRA, M. A.
+Estudo de algoritmos de aprendizado de máquina para predição da evasão escolar.
+In: \textit{Simpósio Brasileiro de Informática na Educação (SBIE)}, 32., 2021. Anais.
+Disponível em: \url{https://sol.sbc.org.br/index.php/sbie/article/view/18107}. Acesso em: 18 jun. 2025.
+
+\bibitem{guimaraes2023}
+GUIMARÃES, C. C. \textit{et al.}
+A evasão escolar no ensino superior: reflexões e desafios.
+\textit{Ensaio: Avaliação e Políticas Públicas em Educação}, v. 31, n. 120, 2023.
+Disponível em: \url{https://www.scielo.br/j/ensaio/a/LXh449mpMVTMNsbj3B4CpVP/}. Acesso em: 18 jun. 2025.
+
+\bibitem{rodrigues2022}
+RODRIGUES, A. C. C.; SANTOS, T. D.
+Modelo preditivo para identificação da evasão escolar no ensino superior: uma revisão sistemática.
+\textit{Psicologia: Teoria e Prática}, v. 24, n. 3, 2022.
+Disponível em: \url{https://www.scielo.br/j/ptp/a/ZWQVbVqvs3rpyyynTmDvsfJ/}. Acesso em: 18 jun. 2025.
+
+\bibitem{carvalho2021}
+CARVALHO, R. S.; MACIEL, A. K. A.; CASTRO, C. L.
+Acompanhamento discente com base em análise preditiva.
+\textit{Revista Brasileira de Informática na Educação}, v. 29, 2021.
+Disponível em: \url{https://journals-sol.sbc.org.br/index.php/rbie/article/view/3542}. Acesso em: 18 jun. 2025.
+
+\bibitem{zhao2023}
+ZHAO, L.; WANG, Y.; YANG, M.
+Analysis of college students' dropout behavior based on ensemble learning algorithm.
+\textit{IEEE Access}, v. 11, p. 93627–93637, 2023.
+Disponível em: \url{https://ieeexplore.ieee.org/document/10286747}. Acesso em: 18 jun. 2025.
+
+\bibitem{sun2023}
+SUN, G.; YANG, L.
+Prediction of student dropout using deep learning: a case study in online education.
+\textit{IEEE Access}, v. 11, p. 74754–74765, 2023.
+Disponível em: \url{https://ieeexplore.ieee.org/document/10156696}. Acesso em: 18 jun. 2025.
+
+\bibitem{semesp2024}
+SEMESP.
+Mapa do Ensino Superior no Brasil 2024.
+Disponível em: \url{https://www.semesp.org.br/mapa-do-ensino-superior}. Acesso em: 18 jun. 2025.
+
+\bibitem{inep2023}
+INEP – Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira.
+Censo da Educação Superior 2023.
+Disponível em: \url{https://www.gov.br/inep/pt-br/assuntos/noticias/educacao-superior/censo-da-educacao-superior-2023}. Acesso em: 18 jun. 2025.
+
+\bibitem{putra2025}
+PUTRA, L. G. R. \textit{et al.}
+Student dropout prediction using Random Forest and XGBoost.
+\textit{INTENSIF}, v. 9, n. 1, 2025.
+Disponível em: \url{https://doi.org/10.29407/intensif.v9i1.17949}. Acesso em: 18 jun. 2025.
+
+\bibitem{liu2022}
+LIU, A. J. \textit{et al.}
+Performance and interpretability comparisons of supervised machine learning algorithms: an empirical study.
+\textit{IEEE Access}, v. 10, 2022.
+Disponível em: \url{https://ieeexplore.ieee.org/document/9862895}. Acesso em: 18 jun. 2025.
+
+\bibitem{vithorias2025}
+VITHORIAS.
+Evasão Acadêmica em Universidades Brasileiras - Repositório de Código e Dados.
+GitHub, 2025.
+Disponível em: \url{https://github.com/VithoriaS/Evas-o-Acad-mica-em-Universidades-Brasileiras}. Acesso em: 24 set. 2025.
+
+\end{thebibliography}
+
+\end{document}
